@@ -1,0 +1,212 @@
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <!-- 头部 -->
+      <div class="text-center">
+        <div class="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span class="text-white font-bold text-xl">湖</span>
+        </div>
+        <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+          注册湖北智能旅游
+        </h2>
+        <p class="mt-2 text-sm text-gray-600">
+          已有账户？
+          <router-link to="/login" class="font-medium text-blue-600 hover:text-blue-500">
+            立即登录
+          </router-link>
+        </p>
+      </div>
+
+      <!-- 注册表单 -->
+      <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
+        <div class="space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">姓名</label>
+            <input
+              id="name"
+              v-model="form.name"
+              name="name"
+              type="text"
+              required
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="请输入您的姓名"
+            >
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">邮箱地址</label>
+            <input
+              id="email"
+              v-model="form.email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="请输入邮箱地址"
+            >
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">密码</label>
+            <input
+              id="password"
+              v-model="form.password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="请输入密码（至少6位）"
+            >
+          </div>
+
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">确认密码</label>
+            <input
+              id="confirmPassword"
+              v-model="form.confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="请再次输入密码"
+            >
+          </div>
+        </div>
+
+        <!-- 错误信息 -->
+        <div v-if="errorMessage" class="rounded-md bg-red-50 p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">
+                {{ errorMessage }}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- 成功信息 -->
+        <div v-if="successMessage" class="rounded-md bg-green-50 p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">
+                {{ successMessage }}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- 注册按钮 -->
+        <div>
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="isLoading" class="absolute left-0 inset-y-0 flex items-center pl-3">
+              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+            {{ isLoading ? '注册中...' : '注册' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// 表单数据
+const form = reactive({
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+// 状态
+const isLoading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+
+// 处理注册
+const handleRegister = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  try {
+    // 验证密码
+    if (form.password !== form.confirmPassword) {
+      errorMessage.value = '两次输入的密码不一致'
+      return
+    }
+
+    if (form.password.length < 6) {
+      errorMessage.value = '密码长度至少6位'
+      return
+    }
+
+    // 模拟注册过程
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // 获取现有用户数据
+    const users = JSON.parse(localStorage.getItem('users') || '[]')
+    
+    // 检查邮箱是否已存在
+    const existingUser = users.find((u: any) => u.email === form.email)
+    if (existingUser) {
+      errorMessage.value = '该邮箱已被注册'
+      return
+    }
+
+    // 创建新用户
+    const newUser = {
+      id: Date.now().toString(),
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      createdAt: new Date().toISOString(),
+      favorites: {
+        attractions: [],
+        routes: []
+      }
+    }
+
+    // 保存用户数据
+    users.push(newUser)
+    localStorage.setItem('users', JSON.stringify(users))
+
+    successMessage.value = '注册成功！正在跳转到登录页面...'
+    
+    // 2秒后跳转到登录页面
+    setTimeout(() => {
+      router.push('/login')
+    }, 2000)
+
+  } catch (error) {
+    errorMessage.value = '注册失败，请重试'
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
