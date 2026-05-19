@@ -45,9 +45,10 @@
           >
             <div class="relative">
               <img
-                :src="attraction.images[0]"
+                :src="getFirstImage(attraction)"
                 :alt="attraction.name"
                 class="w-full h-48 object-cover"
+                @error="onImageError"
               >
               <div class="absolute top-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded-full text-sm font-semibold">
                 {{ attraction.rating }}⭐
@@ -58,7 +59,7 @@
               <p class="text-gray-600 mb-4 line-clamp-2">{{ attraction.description }}</p>
               <div class="flex items-center justify-between">
                 <span class="text-blue-600 font-semibold">
-                  {{ attraction.price === 0 ? '免费' : `¥${attraction.price}` }}
+                  {{ attraction.price === 0 ? '免费' : `${attraction.price}元` }}
                 </span>
                 <router-link
                   :to="`/attractions/${attraction.id}`"
@@ -164,19 +165,50 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { attractions, routes } from '../data/attractions'
+import { ref, onMounted, computed } from 'vue'
+import { routes } from '../data/attractions'
+import { usePopularity } from '../composables/usePopularity'
 import WeatherWidget from '../components/WeatherWidget.vue'
 
-// 精选景点（评分最高的前3个）
-const featuredAttractions = computed(() => 
-  attractions
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 3)
-)
+const { loadAttractions, getTopAttractions } = usePopularity()
 
-// 精选路线（前2个）
+const attractions = ref<any[]>([])
+const featuredAttractions = ref<any[]>([])
 const featuredRoutes = computed(() => routes.slice(0, 2))
+
+// 加载数据
+const loadData = async () => {
+  try {
+    // 加载所有景点
+    attractions.value = await loadAttractions()
+
+    // 获取热门景点Top 5，取前3个作为精选
+    const topAttractions = await getTopAttractions(5)
+    featuredAttractions.value = topAttractions.slice(0, 3)
+  } catch (error) {
+    console.error('加载数据失败:', error)
+  }
+}
+
+// 获取景点第一张图片（带fallback）
+const getFirstImage = (attraction: any) => {
+  if (attraction.images && attraction.images.length > 0) {
+    return attraction.images[0]
+  }
+  if (attraction.image_url) {
+    return attraction.image_url
+  }
+  return 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(attraction.name || '暂无图片')
+}
+
+const onImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.src = 'https://via.placeholder.com/400x300?text=图片加载失败'
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>

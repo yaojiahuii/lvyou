@@ -1,4 +1,32 @@
-import type { Attraction } from '../types'
+import type { Attraction, Review } from '../types'
+
+// 用户评价数据
+const sampleReviews: Review[] = [
+  {
+    id: 'r1',
+    userId: 'u1',
+    userName: '旅行爱好者',
+    rating: 5,
+    comment: '非常棒的景点，历史文化氛围浓厚，导游讲解很专业！',
+    date: '2024-10-15'
+  },
+  {
+    id: 'r2',
+    userId: 'u2',
+    userName: '摄影达人',
+    rating: 4,
+    comment: '风景很美，适合拍照，就是人有点多。',
+    date: '2024-10-10'
+  },
+  {
+    id: 'r3',
+    userId: 'u3',
+    userName: '家庭游客',
+    rating: 4,
+    comment: '带孩子来学习历史知识，很有教育意义。',
+    date: '2024-10-05'
+  }
+]
 
 export const attractions: Attraction[] = [
   {
@@ -20,7 +48,11 @@ export const attractions: Attraction[] = [
     tags: ['历史建筑', '文化古迹', '登高望远'],
     features: ['免费WiFi', '停车场', '导游服务', '纪念品商店'],
     recommendedDuration: '2-3小时',
-    bestTimeToVisit: '春秋两季'
+    bestTimeToVisit: '春秋两季',
+    category: 'historical',
+    status: 'open',
+    popularity: 95,
+    reviews: sampleReviews
   },
   {
     id: '2',
@@ -41,7 +73,11 @@ export const attractions: Attraction[] = [
     tags: ['道教圣地', '世界遗产', '古建筑', '武术发源地'],
     features: ['索道', '住宿', '餐饮', '导游服务'],
     recommendedDuration: '1-2天',
-    bestTimeToVisit: '四季皆宜'
+    bestTimeToVisit: '四季皆宜',
+    category: 'cultural',
+    status: 'open',
+    popularity: 92,
+    reviews: sampleReviews
   },
   {
     id: '3',
@@ -50,8 +86,8 @@ export const attractions: Attraction[] = [
     location: '宜昌市夷陵区三斗坪镇',
     city: '宜昌',
     images: [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800',
-      'https://images.unsplash.com/photo-1548013146-72479768bada?w=800'
+      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800'
     ],
     rating: 4.7,
     price: 105,
@@ -62,7 +98,11 @@ export const attractions: Attraction[] = [
     tags: ['水利工程', '现代建筑', '科普教育'],
     features: ['观景台', '展览馆', '停车场', '导游服务'],
     recommendedDuration: '3-4小时',
-    bestTimeToVisit: '春秋两季'
+    bestTimeToVisit: '春秋两季',
+    category: 'cultural',
+    status: 'open',
+    popularity: 88,
+    reviews: sampleReviews
   },
   {
     id: '4',
@@ -71,8 +111,8 @@ export const attractions: Attraction[] = [
     location: '神农架林区',
     city: '神农架',
     images: [
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800'
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800',
+      'https://images.unsplash.com/photo-1440581572329-cee517e90f81?w=800'
     ],
     rating: 4.6,
     price: 130,
@@ -82,7 +122,11 @@ export const attractions: Attraction[] = [
     tags: ['自然保护区', '原始森林', '野生动物', '生态旅游'],
     features: ['住宿', '餐饮', '导游服务', '观鸟'],
     recommendedDuration: '2-3天',
-    bestTimeToVisit: '夏季避暑'
+    bestTimeToVisit: '夏季避暑',
+    category: 'natural',
+    status: 'open',
+    popularity: 85,
+    reviews: sampleReviews
   },
   {
     id: '5',
@@ -91,8 +135,8 @@ export const attractions: Attraction[] = [
     location: '恩施市沐抚办事处',
     city: '恩施',
     images: [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800',
-      'https://images.unsplash.com/photo-1548013146-72479768bada?w=800'
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800'
     ],
     rating: 4.8,
     price: 200,
@@ -102,7 +146,11 @@ export const attractions: Attraction[] = [
     tags: ['峡谷地貌', '土家族文化', '摄影圣地', '户外探险'],
     features: ['索道', '住宿', '餐饮', '民族表演'],
     recommendedDuration: '1-2天',
-    bestTimeToVisit: '春秋两季'
+    bestTimeToVisit: '春秋两季',
+    category: 'natural',
+    status: 'open',
+    popularity: 90,
+    reviews: sampleReviews
   },
   {
     id: '6',
@@ -111,8 +159,8 @@ export const attractions: Attraction[] = [
     location: '武汉市武昌区东湖路',
     city: '武汉',
     images: [
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800'
+      'https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=800',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800'
     ],
     rating: 4.5,
     price: 0,
@@ -122,7 +170,11 @@ export const attractions: Attraction[] = [
     tags: ['城中湖', '樱花', '荷花', '休闲娱乐'],
     features: ['游船', '自行车租赁', '餐饮', '停车场'],
     recommendedDuration: '半天',
-    bestTimeToVisit: '春季赏樱'
+    bestTimeToVisit: '春季赏樱',
+    category: 'natural',
+    status: 'open',
+    popularity: 82,
+    reviews: sampleReviews
   },
   {
     id: '7',
@@ -131,8 +183,8 @@ export const attractions: Attraction[] = [
     location: '襄阳市襄城区隆中路461号',
     city: '襄阳',
     images: [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800',
-      'https://images.unsplash.com/photo-1548013146-72479768bada?w=800'
+      'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=800',
+      'https://images.unsplash.com/photo-1545389336-cf090694435e?w=800'
     ],
     rating: 4.4,
     price: 67,
@@ -142,7 +194,11 @@ export const attractions: Attraction[] = [
     tags: ['三国文化', '历史遗迹', '诸葛亮', '古建筑'],
     features: ['导游服务', '停车场', '纪念品商店'],
     recommendedDuration: '2-3小时',
-    bestTimeToVisit: '四季皆宜'
+    bestTimeToVisit: '四季皆宜',
+    category: 'historical',
+    status: 'open',
+    popularity: 78,
+    reviews: sampleReviews
   },
   {
     id: '8',
@@ -151,8 +207,8 @@ export const attractions: Attraction[] = [
     location: '赤壁市赤壁镇',
     city: '赤壁',
     images: [
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800'
+      'https://images.unsplash.com/photo-1599939571322-792a326991f2?w=800',
+      'https://images.unsplash.com/photo-15893633698843-69a4790f6dd7?w=800'
     ],
     rating: 4.3,
     price: 60,
@@ -162,7 +218,11 @@ export const attractions: Attraction[] = [
     tags: ['三国文化', '历史遗迹', '古战场', '文化教育'],
     features: ['导游服务', '停车场', '展览馆'],
     recommendedDuration: '2-3小时',
-    bestTimeToVisit: '四季皆宜'
+    bestTimeToVisit: '四季皆宜',
+    category: 'historical',
+    status: 'open',
+    popularity: 75,
+    reviews: sampleReviews
   }
 ]
 

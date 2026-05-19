@@ -74,6 +74,43 @@
               placeholder="请再次输入密码"
             >
           </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">用户角色</label>
+            <div class="mt-1 flex space-x-4">
+              <label class="inline-flex items-center">
+                <input
+                  v-model="form.role"
+                  type="radio"
+                  value="user"
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  checked
+                >
+                <span class="ml-2 text-sm text-gray-700">普通用户</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input
+                  v-model="form.role"
+                  type="radio"
+                  value="admin"
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                >
+                <span class="ml-2 text-sm text-gray-700">管理员</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700">联系电话</label>
+            <input
+              id="phone"
+              v-model="form.phone"
+              name="phone"
+              type="tel"
+              class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="请输入联系电话（可选）"
+            >
+          </div>
         </div>
 
         <!-- 错误信息 -->
@@ -132,16 +169,41 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
+const { register, quickLogin } = useAuth()
 
 // 表单数据
 const form = reactive({
   name: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  role: 'user' as 'user' | 'admin',
+  phone: ''
 })
+
+// 密码强度检查函数
+const checkPasswordStrength = (password: string): { valid: boolean; message: string } => {
+  if (password.length < 6) {
+    return { valid: false, message: '密码长度至少6位' }
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: '密码必须包含大写字母' }
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: '密码必须包含小写字母' }
+  }
+  
+  if (!/\d/.test(password)) {
+    return { valid: false, message: '密码必须包含数字' }
+  }
+  
+  return { valid: true, message: '密码强度良好' }
+}
 
 // 状态
 const isLoading = ref(false)
@@ -161,47 +223,47 @@ const handleRegister = async () => {
       return
     }
 
-    if (form.password.length < 6) {
-      errorMessage.value = '密码长度至少6位'
+    // 使用新的密码强度检查
+    const passwordCheck = checkPasswordStrength(form.password)
+    if (!passwordCheck.valid) {
+      errorMessage.value = passwordCheck.message
       return
     }
 
     // 模拟注册过程
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // 获取现有用户数据
-    const users = JSON.parse(localStorage.getItem('users') || '[]')
-    
-    // 检查邮箱是否已存在
-    const existingUser = users.find((u: any) => u.email === form.email)
-    if (existingUser) {
-      errorMessage.value = '该邮箱已被注册'
-      return
-    }
-
     // 创建新用户
-    const newUser = {
-      id: Date.now().toString(),
+    const result = await register({
       name: form.name,
       email: form.email,
       password: form.password,
-      createdAt: new Date().toISOString(),
-      favorites: {
-        attractions: [],
-        routes: []
-      }
+      role: form.role
+    })
+
+    if (!result.user || result.error) {
+      errorMessage.value = result.error || '注册失败，请重试'
+      return
     }
 
-    // 保存用户数据
-    users.push(newUser)
-    localStorage.setItem('users', JSON.stringify(users))
+    const newUser = result.user
 
-    successMessage.value = '注册成功！正在跳转到登录页面...'
-    
-    // 2秒后跳转到登录页面
+    // 自动登录并持久化记住用户
+    const userSession = {
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+      avatar: newUser.avatar,
+      loginTime: new Date().toISOString()
+    }
+    quickLogin(userSession)
+    localStorage.setItem('rememberedUser', JSON.stringify(userSession))
+
+    successMessage.value = `注册成功！您已成为${newUser.role === 'admin' ? '管理员' : '普通用户'}，正在跳转...`
     setTimeout(() => {
-      router.push('/login')
-    }, 2000)
+      router.push('/')
+    }, 1500)
 
   } catch (error) {
     errorMessage.value = '注册失败，请重试'

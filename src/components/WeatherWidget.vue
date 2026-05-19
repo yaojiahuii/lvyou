@@ -1,54 +1,70 @@
 <template>
-  <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-    <div class="flex items-center justify-between">
+  <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+    <div class="flex items-center justify-between mb-3">
       <div>
-        <h3 class="text-lg font-semibold">武汉天气</h3>
-        <div class="flex items-center space-x-2 mt-1">
-          <span class="text-3xl font-bold">{{ weather.temperature }}°C</span>
-          <div class="text-sm">
-            <div>{{ weather.condition }}</div>
-            <div>湿度: {{ weather.humidity }}%</div>
-            <div>风速: {{ weather.windSpeed }}km/h</div>
-          </div>
+        <div class="text-sm opacity-90">武汉天气</div>
+        <div class="text-xs opacity-75">{{ lastUpdate }}</div>
+      </div>
+      <div v-if="isLoading" class="text-sm opacity-75">加载中...</div>
+    </div>
+    
+    <div v-if="error" class="text-sm opacity-90 bg-white bg-opacity-20 rounded p-2 mb-3">
+      {{ error }}
+    </div>
+    
+    <div v-if="!isLoading">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-5xl font-bold mb-2">{{ weather.temperature }}°C</div>
+          <div class="text-lg opacity-90">{{ weather.condition }}</div>
+        </div>
+        <div class="text-6xl">
+          {{ weather.icon }}
         </div>
       </div>
-      <div class="text-4xl">
-        {{ weather.icon }}
+      
+      <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white border-opacity-20">
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-2 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path>
+          </svg>
+          <span class="text-sm">湿度: {{ weather.humidity }}%</span>
+        </div>
+        <div class="flex items-center">
+          <svg class="w-4 h-4 mr-2 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+          <span class="text-sm">风速: {{ weather.windSpeed }}km/h</span>
+        </div>
+      </div>
+      
+      <div class="mt-3 pt-3 border-t border-white border-opacity-20">
+        <button 
+          @click="refreshWeather"
+          :disabled="isLoading"
+          class="w-full text-sm bg-white bg-opacity-20 hover:bg-opacity-30 rounded py-2 transition-colors disabled:opacity-50"
+        >
+          <span v-if="isLoading">加载中...</span>
+          <span v-else>刷新天气</span>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import type { WeatherInfo } from '../types'
+import { onMounted } from 'vue'
+import { useWeather } from '../composables/useWeather'
 
-const weather = ref<WeatherInfo>({
-  temperature: 22,
-  condition: '多云',
-  humidity: 65,
-  windSpeed: 12,
-  icon: '☁️'
-})
+const { weather, lastUpdate, isLoading, error, fetchWeather, initWeather } = useWeather()
 
-// 模拟天气数据更新
+// 初始化天气
 onMounted(() => {
-  const updateWeather = () => {
-    const conditions = ['晴天', '多云', '小雨', '阴天']
-    const icons = ['☀️', '☁️', '🌧️', '⛅']
-    const randomIndex = Math.floor(Math.random() * conditions.length)
-    
-    weather.value = {
-      temperature: Math.floor(Math.random() * 15) + 15, // 15-30度
-      condition: conditions[randomIndex],
-      humidity: Math.floor(Math.random() * 30) + 50, // 50-80%
-      windSpeed: Math.floor(Math.random() * 10) + 5, // 5-15km/h
-      icon: icons[randomIndex]
-    }
-  }
-
-  updateWeather()
-  // 每30分钟更新一次天气
-  setInterval(updateWeather, 30 * 60 * 1000)
+  initWeather()
 })
+
+// 刷新天气
+const refreshWeather = () => {
+  fetchWeather()
+}
 </script>

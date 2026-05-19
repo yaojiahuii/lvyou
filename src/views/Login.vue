@@ -64,9 +64,9 @@
           </div>
 
           <div class="text-sm">
-            <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
+            <router-link to="/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
               忘记密码？
-            </a>
+            </router-link>
           </div>
         </div>
 
@@ -81,6 +81,22 @@
             <div class="ml-3">
               <h3 class="text-sm font-medium text-red-800">
                 {{ errorMessage }}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- 成功信息 -->
+        <div v-if="successMessage" class="rounded-md bg-green-50 p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-green-800">
+                {{ successMessage }}
               </h3>
             </div>
           </div>
@@ -103,18 +119,36 @@
           </button>
         </div>
 
+        <!-- 忘记密码和注册链接 -->
+        <div class="flex justify-between items-center text-sm">
+          <router-link to="/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
+            忘记密码？
+          </router-link>
+          <router-link to="/register" class="font-medium text-blue-600 hover:text-blue-500">
+            还没有账户？立即注册
+          </router-link>
+        </div>
+
         <!-- 演示账户 -->
         <div class="mt-6 p-4 bg-gray-50 rounded-md">
-          <h3 class="text-sm font-medium text-gray-900 mb-2">演示账户</h3>
+          <h3 class="text-sm font-medium text-gray-900 mb-2">测试账户</h3>
           <div class="text-xs text-gray-600 space-y-1">
-            <p><strong>邮箱:</strong> demo@example.com</p>
-            <p><strong>密码:</strong> demo123</p>
-            <button
-              @click="fillDemoAccount"
-              class="text-blue-600 hover:text-blue-500 underline"
-            >
-              点击填入演示账户
-            </button>
+            <p><strong>管理员：</strong>admin@tourism.com / Admin123</p>
+            <p><strong>普通用户：</strong>user1@tourism.com / User123</p>
+            <div class="mt-2 pt-2 border-t border-gray-200">
+              <button
+                @click="fillAdminAccount"
+                class="text-blue-600 hover:text-blue-500 underline mr-3"
+              >
+                填入管理员账户
+              </button>
+              <button
+                @click="fillUserAccount"
+                class="text-blue-600 hover:text-blue-500 underline"
+              >
+                填入普通用户
+              </button>
+            </div>
           </div>
         </div>
       </form>
@@ -128,7 +162,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
-const { login } = useAuth()
+const { login, quickLogin } = useAuth()
 
 // 表单数据
 const form = reactive({
@@ -140,53 +174,72 @@ const form = reactive({
 // 状态
 const isLoading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 
 // 处理登录
 const handleLogin = async () => {
   isLoading.value = true
   errorMessage.value = ''
+  successMessage.value = ''
 
   try {
-    // 模拟登录验证
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 调用后端API登录
+    const result = await login(form.email, form.password)
 
-    // 获取存储的用户数据
-    const users = JSON.parse(localStorage.getItem('users') || '[]')
-    const user = users.find((u: any) => u.email === form.email && u.password === form.password)
-
-    if (user) {
-      // 登录成功，保存用户信息
+    if (result.user) {
+      // 登录成功
       const userSession = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role || 'user',
+        avatar: result.user.avatar,
         loginTime: new Date().toISOString()
       }
       
-      // 使用认证系统登录
-      login(userSession)
-      
-      // 如果选择记住我，也保存到 localStorage
+      // 如果选择记住我，保存到 localStorage
       if (form.rememberMe) {
         localStorage.setItem('rememberedUser', JSON.stringify(userSession))
       }
 
-      // 跳转到首页
-      router.push('/')
+      // 显示成功提示
+      const roleText = result.user.role === 'admin' ? '管理员' : '普通用户'
+      successMessage.value = `登录成功！欢迎${roleText} ${result.user.name}`
+
+      // 延迟跳转，让用户看到提示
+      setTimeout(() => {
+        router.push('/')
+      }, 1500)
     } else {
-      errorMessage.value = '邮箱或密码错误'
+      // 登录失败 - 错误消息将持续显示，不会自动清除
+      errorMessage.value = result.error || '邮箱或密码错误'
+      // 5秒后自动清除错误消息
+      setTimeout(() => {
+        errorMessage.value = ''
+      }, 5000)
     }
-  } catch (error) {
-    errorMessage.value = '登录失败，请重试'
+  } catch (error: any) {
+    // 捕获异常 - 错误消息将持续显示
+    errorMessage.value = error.message || '登录失败，请重试'
+    // 5秒后自动清除错误消息
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 5000)
   } finally {
     isLoading.value = false
   }
 }
 
-// 填入演示账户
-const fillDemoAccount = () => {
-  form.email = 'demo@example.com'
-  form.password = 'demo123'
+// 填入管理员账户
+const fillAdminAccount = () => {
+  form.email = 'admin@tourism.com'
+  form.password = 'Admin123'
+}
+
+// 填入普通用户账户
+const fillUserAccount = () => {
+  form.email = 'user1@tourism.com'
+  form.password = 'User123'
 }
 
 // 检查是否已有记住的用户

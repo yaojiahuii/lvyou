@@ -53,7 +53,14 @@
 
     <!-- 景点列表 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- 加载状态 -->
+      <div v-if="isLoading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-600">加载景点数据中...</p>
+      </div>
+      
+      <!-- 景点网格 -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div
           v-for="attraction in filteredAttractions"
           :key="attraction.id"
@@ -62,12 +69,13 @@
         >
           <div class="relative">
             <img
-              :src="attraction.images[0]"
+              :src="getFirstImage(attraction)"
               :alt="attraction.name"
               class="w-full h-48 object-cover"
+              @error="onImageError"
             >
             <div class="absolute top-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded-full text-sm font-semibold">
-              {{ attraction.rating }}⭐
+              {{ attraction.rating || 0 }}⭐
             </div>
             <div class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
               {{ attraction.city }}
@@ -76,16 +84,16 @@
           
           <div class="p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-2">{{ attraction.name }}</h3>
-            <p class="text-gray-600 mb-4 line-clamp-2">{{ attraction.description }}</p>
+            <p class="text-gray-600 mb-4 line-clamp-2">{{ attraction.description || '暂无描述' }}</p>
             
             <div class="flex items-center justify-between mb-4">
               <span class="text-blue-600 font-semibold text-lg">
-                {{ attraction.price === 0 ? '免费' : `¥${attraction.price}` }}
+                {{ attraction.price === 0 ? '免费' : `${attraction.price}元` }}
               </span>
-              <span class="text-sm text-gray-500">{{ attraction.recommendedDuration }}</span>
+              <span class="text-sm text-gray-500">{{ attraction.recommended_duration || attraction.recommendedDuration || '' }}</span>
             </div>
             
-            <div class="flex flex-wrap gap-2 mb-4">
+            <div v-if="attraction.tags && attraction.tags.length" class="flex flex-wrap gap-2 mb-4">
               <span
                 v-for="tag in attraction.tags.slice(0, 3)"
                 :key="tag"
@@ -106,7 +114,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                   </svg>
                 </button>
-                <span class="text-sm text-gray-500">{{ attraction.openingHours }}</span>
+                <span class="text-sm text-gray-500">{{ attraction.opening_hours || attraction.openingHours || '暂无' }}</span>
               </div>
               <button
                 @click.stop="goToDetail(attraction.id)"
@@ -136,25 +144,28 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { attractions } from '../data/attractions'
+import { usePopularity } from '../composables/usePopularity'
 import type { Attraction } from '../types'
 
 const router = useRouter()
+const { loadAttractions, getAttractionsByCity, increasePopularity } = usePopularity()
 
 // 响应式数据
 const searchQuery = ref('')
 const selectedCity = ref('')
 const selectedPriceRange = ref('')
 const favorites = ref<string[]>([])
+const attractions = ref<Attraction[]>([])
+const isLoading = ref(true)
 
 // 计算属性
 const cities = computed(() => {
-  const citySet = new Set(attractions.map(a => a.city))
+  const citySet = new Set(attractions.value.map(a => a.city))
   return Array.from(citySet).sort()
 })
 
 const filteredAttractions = computed(() => {
-  let filtered = attractions
+  let filtered = attractions.value
 
   // 搜索过滤
   if (searchQuery.value) {
@@ -162,7 +173,7 @@ const filteredAttractions = computed(() => {
     filtered = filtered.filter(attraction =>
       attraction.name.toLowerCase().includes(query) ||
       attraction.description.toLowerCase().includes(query) ||
-      attraction.tags.some(tag => tag.toLowerCase().includes(query))
+      (attraction.tags && attraction.tags.some(tag => tag.toLowerCase().includes(query)))
     )
   }
 
@@ -174,15 +185,16 @@ const filteredAttractions = computed(() => {
   // 价格过滤
   if (selectedPriceRange.value) {
     filtered = filtered.filter(attraction => {
+      const price = attraction.price || 0
       switch (selectedPriceRange.value) {
         case 'free':
-          return attraction.price === 0
+          return price === 0
         case '0-100':
-          return attraction.price > 0 && attraction.price <= 100
+          return price > 0 && price <= 100
         case '100-200':
-          return attraction.price > 100 && attraction.price <= 200
+          return price > 100 && price <= 200
         case '200+':
-          return attraction.price > 200
+          return price > 200
         default:
           return true
       }
@@ -207,27 +219,57 @@ const clearFilters = () => {
   selectedPriceRange.value = ''
 }
 
-const goToDetail = (id: string) => {
+const goToDetail = (id: number | string) => {
   router.push(`/attractions/${id}`)
 }
 
-const toggleFavorite = (id: string) => {
-  const index = favorites.value.indexOf(id)
+// 获取景点第一张图片
+const getFirstImage = (attraction: any) => {
+  if (attraction.images && attraction.images.length > 0) {
+    return attraction.images[0]
+  }
+  if (attraction.image_url) {
+    return attraction.image_url
+  }
+  return 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(attraction.name || '暂无图片')
+}
+
+// 图片加载失败处理
+const onImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.src = 'https://via.placeholder.com/400x300?text=图片加载失败'
+}
+
+const toggleFavorite = (id: number | string) => {
+  const strId = String(id)
+  const index = favorites.value.indexOf(strId)
   if (index > -1) {
     favorites.value.splice(index, 1)
   } else {
-    favorites.value.push(id)
+    favorites.value.push(strId)
+    // 异步调用后端增加收藏计数（不阻塞UI）
+    increasePopularity(strId, 'favorite').catch(e => console.error('增加收藏计数失败:', e))
   }
   // 保存到本地存储
   localStorage.setItem('favorites', JSON.stringify(favorites.value))
 }
 
-const isFavorite = (id: string) => {
-  return favorites.value.includes(id)
+const isFavorite = (id: number | string) => {
+  return favorites.value.includes(String(id))
 }
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
+  // 从后端加载景点数据
+  isLoading.value = true
+  try {
+    attractions.value = await loadAttractions()
+  } catch (error) {
+    console.error('加载景点数据失败:', error)
+  } finally {
+    isLoading.value = false
+  }
+  
   // 从本地存储加载收藏
   const savedFavorites = localStorage.getItem('favorites')
   if (savedFavorites) {

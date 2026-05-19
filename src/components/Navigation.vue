@@ -42,11 +42,26 @@
           >
             收藏
           </router-link>
+          <router-link 
+            to="/ai-chat" 
+            class="nav-link"
+            :class="{ 'text-blue-600': $route.path === '/ai-chat' }"
+          >
+            AI助手
+          </router-link>
         </div>
 
         <!-- 用户菜单 -->
         <div class="hidden md:flex items-center space-x-4">
           <div v-if="isLoggedIn" class="flex items-center space-x-4">
+            <!-- 管理员入口 -->
+            <router-link
+              v-if="isAdmin"
+              to="/admin"
+              class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              管理面板
+            </router-link>
             <span class="text-sm text-gray-700">欢迎，{{ currentUser?.name }}</span>
             <button
               @click="handleLogout"
@@ -134,6 +149,13 @@
           >
             收藏
           </router-link>
+          <router-link 
+            to="/ai-chat" 
+            class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md"
+            @click="closeMobileMenu"
+          >
+            AI助手
+          </router-link>
           
           <!-- 移动端用户菜单 -->
           <div v-if="isLoggedIn" class="px-3 py-2 border-t border-gray-200">
@@ -187,7 +209,7 @@ const searchQuery = ref('')
 const mobileMenuOpen = ref(false)
 
 // 使用认证系统
-const { currentUser, isLoggedIn, logout } = useAuth()
+const { currentUser, isLoggedIn, isAdmin, logout } = useAuth()
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
